@@ -1,0 +1,41 @@
+name: Continuous Integration
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CI_COMMIT_MESSAGE: Continuous Integration Build Artifacts
+      CI_COMMIT_AUTHOR: Continuous Integration
+    steps:
+      - uses: actions/checkout@v2
+
+      # Set environment variable "is-auto-commit"
+      - name: Set environment variable "is-auto-commit"
+        if: github.event.commits[0].message == env.CI_COMMIT_MESSAGE && github.event.commits[0].author.name == env.CI_COMMIT_AUTHOR
+        run: echo "is-auto-commit=true" >> $GITHUB_ENV
+
+      # Display variables for debugging
+      - name: Display Github event variable "github.event.commits[0].message"
+        run: echo "last commit message = ${{ github.event.commits[0].message }}"
+      - name: Display Github event variable "github.event.commits[0].author.name"
+        run: echo "last commit author = ${{ github.event.commits[0].author.name }}"
+      - name: Display environment variable "is-auto-commit"
+        run: echo "is-auto-commit=${{ env.is-auto-commit }}"
+
+      # Commit and push all changed files.
+      - name: GIT Commit Build Artifacts (coverage, dist, devdist, docs)
+        # Only run on main branch push (e.g. after pull request merge).
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        run: |
+          ls -la
+          git --version
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "username@users.noreply.github.com"
+        # git reset HEAD~
+        # git add . && git commit -c ORIG_HEAD
